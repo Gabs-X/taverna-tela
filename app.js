@@ -85,13 +85,14 @@ function compartilhar() {
 		melhorarQualidade(p.chamada);
 	}
 
-	async function escolher() {
+	/** Abre a escolha do navegador. preferirGuia já deixa aberta a aba "Guia do Chrome". */
+	async function escolher(preferirGuia = false) {
 		let novo;
 		try {
 			novo = params.has('demo')
-				? fluxoDemo()
+				? fluxoDemo(params.get('demo') === 'tela')
 				: await navigator.mediaDevices.getDisplayMedia({
-						video: { frameRate: { ideal: 30, max: 60 } },
+						video: { frameRate: { ideal: 30, max: 60 }, ...(preferirGuia ? { displaySurface: 'browser' } : {}) },
 						audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
 						systemAudio: 'include',
 						selfBrowserSurface: 'exclude',
@@ -113,6 +114,21 @@ function compartilhar() {
 		selo('AO VIVO', true);
 		const semSom = fluxo.getAudioTracks().length === 0;
 		status(semSom ? 'Ao vivo, sem som (marque "Compartilhar áudio" se quiser mandar o som).' : 'Ao vivo, com som.');
+		// Tela inteira com som: vai junto todo o áudio do PC, inclusive o Discord (quem assiste se ouve).
+		const telaInteira = params.get('demo') === 'tela' || video.getSettings().displaySurface === 'monitor';
+		$('avisoEco').hidden = !(telaInteira && !semSom);
+		plateia.forEach((_, id) => ligar(id));
+	}
+
+	/** Corta o som sem parar a imagem e manda de novo para quem assiste. */
+	function tirarSom() {
+		if (!fluxo) return;
+		for (const t of fluxo.getAudioTracks()) {
+			t.stop();
+			fluxo.removeTrack(t);
+		}
+		$('avisoEco').hidden = true;
+		status('Ao vivo, sem som (o Discord não vaza mais).');
 		plateia.forEach((_, id) => ligar(id));
 	}
 
@@ -125,12 +141,16 @@ function compartilhar() {
 		$('palcoVazio').hidden = false;
 		$('trocar').hidden = true;
 		$('parar').hidden = true;
+		$('avisoEco').hidden = true;
 		selo('');
 		status('Você parou de compartilhar. Dá para começar de novo.');
 	}
 
-	$('escolher').onclick = escolher;
-	$('trocar').onclick = escolher;
+	$('escolher').onclick = () => escolher();
+	$('trocar').onclick = () => escolher();
+	$('tirarSom').onclick = tirarSom;
+	$('trocarGuia').onclick = () => escolher(true);
+	$('deixarAssim').onclick = () => ($('avisoEco').hidden = true);
 	$('parar').onclick = parar;
 	window.addEventListener('beforeunload', () => avisarTodos({ tipo: 'parou' }));
 }
@@ -153,8 +173,9 @@ function melhorarQualidade(chamada) {
 	setTimeout(aplicar, 1000);
 }
 
-/** Tela de teste (?demo): uma animação no lugar da tela, para testar sem escolher nada. */
-function fluxoDemo() {
+/** Tela de teste (?demo): uma animação no lugar da tela, para testar sem escolher nada.
+ *  ?demo=tela finge a tela inteira com som (um som mudo), para ver o aviso do Discord. */
+function fluxoDemo(comSom = false) {
 	const c = Object.assign(document.createElement('canvas'), { width: 1280, height: 720 });
 	const g = c.getContext('2d');
 	let t = 0;
@@ -169,7 +190,18 @@ function fluxoDemo() {
 		g.font = '48px sans-serif';
 		g.fillText(`Teste da Tela da Taverna · ${t}`, 60, 90);
 	}, 33);
-	return c.captureStream(30);
+	const fluxo = c.captureStream(30);
+	if (comSom) {
+		const ctx = new AudioContext();
+		const destino = ctx.createMediaStreamDestination();
+		const volume = ctx.createGain();
+		volume.gain.value = 0;
+		const osc = ctx.createOscillator();
+		osc.connect(volume).connect(destino);
+		osc.start();
+		fluxo.addTrack(destino.stream.getAudioTracks()[0]);
+	}
+	return fluxo;
 }
 
 // ---------- Quem assiste ----------

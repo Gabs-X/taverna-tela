@@ -13,7 +13,8 @@ Página: https://gabs-x.github.io/taverna-tela/
   - `?assistir=<sala>&chave=<senha>`: quem assiste. Quem compartilha confere a senha antes de mandar a tela.
 - A tela vai sempre com o som (o navegador pergunta; para vídeo do YouTube, escolha a guia do Chrome e marque "Compartilhar áudio").
 - Cada pessoa assistindo recebe uma cópia direto de quem compartilha: vai bem com uns 4 a 6 assistindo.
-- `&demo` no link de compartilhar manda uma animação de teste no lugar da tela.
+- Tela inteira com som: o navegador manda todo o som do PC, inclusive o Discord (quem assiste se ouve). A página avisa e oferece "Tirar o som" ou "Trocar por uma guia".
+- `&demo` no link de compartilhar manda uma animação de teste no lugar da tela; `&demo=tela` finge a tela inteira com som, para ver o aviso.
 
 ## Arquivos
 

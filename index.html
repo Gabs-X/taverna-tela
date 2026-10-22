@@ -15,7 +15,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Nunito:wght@400;600;800&display=swap" />
-	<link rel="stylesheet" href="./estilo.css?v=2" />
+	<link rel="stylesheet" href="./estilo.css?v=3" />
 </head>
 <body>
 	<header class="topo">
@@ -41,6 +41,19 @@
 					<h1>Mostre sua tela para a Taverna</h1>
 					<p>Escolha uma janela, uma guia ou a tela inteira. Vídeo do YouTube? Escolha a <b>guia do Chrome</b> e marque <b>Compartilhar áudio</b>.</p>
 					<button id="escolher" class="botao grande">Escolher o que compartilhar</button>
+				</div>
+			</div>
+			<!-- Tela inteira com som: o áudio do PC todo vai junto, inclusive o Discord (quem assiste se ouve). -->
+			<div id="avisoEco" class="aviso" hidden>
+				<div class="aviso-texto">
+					<b>⚠️ O som do Discord está indo junto.</b>
+					Com a tela inteira, o navegador manda todo o som do PC, então quem assiste ouve a própria voz de volta.
+					Para jogo, tire o som ou deixe o Discord tocando num fone diferente da saída padrão do Windows. Para vídeo, compartilhe a guia do Chrome.
+				</div>
+				<div class="aviso-botoes">
+					<button id="tirarSom" class="botao">🔇 Tirar o som</button>
+					<button id="trocarGuia" class="botao secundario">Trocar por uma guia</button>
+					<button id="deixarAssim" class="botao secundario">Deixar assim</button>
 				</div>
 			</div>
 			<div class="barra">
@@ -73,6 +86,6 @@
 	<footer class="rodape">Feito para a Taverna · a tela vai direto entre os navegadores, com criptografia</footer>
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js" crossorigin="anonymous"></script>
-	<script src="./app.js?v=2"></script>
+	<script src="./app.js?v=3"></script>
 </body>
 </html>
