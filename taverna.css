@@ -1,0 +1,48 @@
+/* Visual da Taverna por cima do VDO.Ninja: tons de madeira e cerveja. */
+:root {
+	--discord-grey-0: #120d09;
+	--discord-grey-1: #1b140f;
+	--discord-grey-2: #211912;
+	--discord-grey-3: #2a2018;
+	--discord-grey-4: #2e231a;
+	--discord-grey-5: #33271d;
+	--discord-grey-6: #3a2c20;
+	--discord-grey-7: #45352a;
+	--discord-grey-8: #6a5646;
+	--background-color: #1b140f;
+	--dark-background-color: #0d0906;
+	--near-black: #0d0906;
+	--container-color: #3a2c20;
+	--button-color: #2e231a;
+	--blue-accent: #6b4a22;
+	--green-accent: #4a5a2a;
+	--a-dark-link: #f0b75a;
+	--a-dark-visited: #f0b75a;
+	--a-dark-hover: #ffd28a;
+	--a-dark-focus: #ffd28a;
+	--a-dark-active: #e8a33a;
+}
+
+body {
+	background-color: var(--background-color);
+}
+
+#header {
+	background-color: #120d09;
+}
+
+#logoname {
+	font-weight: 700;
+	letter-spacing: 0.3px;
+}
+
+#creditoVdo {
+	color: #8a7a68;
+	font-size: 11px;
+	margin-left: 6px;
+	text-decoration: none;
+}
+
+#creditoVdo:hover {
+	color: #f0b75a;
+}

@@ -548,7 +548,7 @@ async function main() {
 				getById("chatBody").innerHTML = "";
 			} catch (e) {}
 		} else if (session.label === false) {
-			document.title = location.hostname;
+			document.title = "Tela da Taverna"; // Taverna: nome fixo em vez do endereço do site
 		}
 		try {
 			if (ln_template === false) {
@@ -559,7 +559,7 @@ async function main() {
 						}
 					});
 				} else {
-					changeLg("blank").then(() => {
+					changeLg("pt-br").then(() => { // Taverna: em português em vez dos textos genéricos
 						if (altLabelOverride) {
 							applyAltLabelOverride(altLabelOverride);
 						}
@@ -571,15 +571,11 @@ async function main() {
 			}
 			//getById("mainmenu").style.opacity = 1;
 
-			getById("qos").innerHTML = '<i class="las la-plug"></i>';
-			getById("logoname").innerHTML = getById("qos").outerHTML;
+			// Taverna: mantém o logo "Tela da Taverna" (o original some com ele fora do vdo.ninja).
 			getById("helpbutton").style.display = "none";
 			getById("reportbutton").style.display = "none";
 			getById("chatBody").innerHTML = "";
-			getById("qos").style.color = "#FFF7";
 			//getById("qos").style.fontSize = "70%";
-			getById("logoname").style.display = "none";
-			getById("logoname").style.margin = "0 0 0 5px";
 		} catch (error) {
 			getById("mainmenu").style.opacity = 1;
 			errorlog(error);
