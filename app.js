@@ -5,8 +5,22 @@
 //   ?compartilhar=<sala>&chave=<senha>  quem mostra a tela
 //   ?assistir=<sala>&chave=<senha>      quem assiste
 // Quem assiste abre uma conexão de dados com a chave; quem compartilha confere a chave e só então manda a tela.
+// O TURN público do PeerJS não existe mais: o bot manda no link o TURN da Taverna (&turn=<host>&tu=<usuário>&tp=<senha>),
+// com senha temporária, para quando os navegadores não conseguem se conectar direto (CGNAT, roteador fechado).
 
 const params = new URLSearchParams(location.search);
+const hostTurn = params.get('turn');
+const OPCOES_PEER = /^[A-Za-z0-9.-]+$/.test(hostTurn ?? '')
+	? {
+			config: {
+				iceServers: [
+					{ urls: 'stun:stun.l.google.com:19302' },
+					{ urls: [`turn:${hostTurn}:3478?transport=udp`, `turn:${hostTurn}:3478?transport=tcp`], username: params.get('tu'), credential: params.get('tp') },
+				],
+			},
+		}
+	: {};
+const ESPERA_IMAGEM = 20_000; // achou a tela mas a imagem não chega: a rede bloqueou, tenta de novo
 const PREFIXO = 'tavernatela-';
 const MAX_BITRATE = 6_000_000; // 6 Mbps: texto nítido e vídeo fluido sem pesar demais para quem envia
 const $ = (id) => document.getElementById(id);
@@ -40,7 +54,7 @@ function compartilhar() {
 	mostrar('compartilhar');
 	document.title = 'Compartilhando · Tela da Taverna';
 	const status = (t) => ($('statusCompartilhar').textContent = t);
-	const peer = new Peer(PREFIXO + sala);
+	const peer = new Peer(PREFIXO + sala, OPCOES_PEER);
 	const plateia = new Map(); // id de quem assiste → { conn, chamada }
 	let fluxo = null;
 
@@ -216,7 +230,7 @@ function assistir() {
 		$('esperaTexto').textContent = texto;
 	};
 	const video = $('tela');
-	const peer = new Peer();
+	const peer = new Peer(OPCOES_PEER);
 	let conn = null;
 	let negado = false;
 	let retentativa = null;
@@ -246,6 +260,7 @@ function assistir() {
 			} else if (d?.tipo === 'esperando') {
 				espera('A tela ainda não começou', 'Quem abriu a sala ainda não escolheu o que mostrar. Fica aqui que aparece sozinho.');
 			} else if (d?.tipo === 'parou') {
+				chamadaAtual = null;
 				video.srcObject = null;
 				$('ativarSom').hidden = true;
 				selo('');
@@ -272,14 +287,50 @@ function assistir() {
 		}
 	});
 
+	let chamadaAtual = null;
 	peer.on('call', (chamada) => {
+		chamadaAtual?.close();
+		chamadaAtual = chamada;
 		chamada.answer();
+		let temImagem = false;
+
+		// A chamada chega antes da imagem: só é "ao vivo" quando o primeiro quadro aparece.
+		// Se a rede bloquear (o caminho não abre), avisa em vez de deixar a tela preta e pede a tela de novo.
+		const semImagem = () => {
+			if (temImagem || chamadaAtual !== chamada) return;
+			chamadaAtual = null;
+			chamada.close();
+			video.srcObject = null;
+			selo('');
+			$('ativarSom').hidden = true;
+			espera('Não deu para conectar a imagem', 'A rede de um dos dois bloqueou a tela. Tentando de novo…');
+			status('Sem imagem. Tentando de novo…');
+			conn?.close(); // ao reconectar, quem compartilha manda a tela de novo
+		};
+		const prazo = setTimeout(semImagem, ESPERA_IMAGEM);
+		chamada.peerConnection?.addEventListener('iceconnectionstatechange', () => {
+			if (chamada.peerConnection.iceConnectionState === 'failed') semImagem();
+		});
+
 		chamada.on('stream', (fluxo) => {
+			if (video.srcObject === fluxo) return; // o PeerJS avisa uma vez por faixa (vídeo e som)
 			video.srcObject = fluxo;
-			$('espera').hidden = true;
-			selo('AO VIVO', true);
+			selo('');
+			espera('Conectando a imagem…', 'A tela foi encontrada, falta a imagem chegar.');
+			status('Conectando a imagem…');
 			const temSom = fluxo.getAudioTracks().length > 0;
-			status(temSom ? 'Ao vivo, com som.' : 'Ao vivo (sem som desta vez).');
+			video.addEventListener(
+				'loadeddata',
+				() => {
+					if (chamadaAtual !== chamada) return;
+					temImagem = true;
+					clearTimeout(prazo);
+					$('espera').hidden = true;
+					selo('AO VIVO', true);
+					status(temSom ? 'Ao vivo, com som.' : 'Ao vivo (sem som desta vez).');
+				},
+				{ once: true },
+			);
 			$('ativarSom').hidden = true;
 			video.muted = false;
 			video.play().catch(() => {
